@@ -28,8 +28,11 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
             res.status(404).send("No image found")
             return;
         }
-        res.writeHead(200,{'Content-Type': contentType}).send(user[0].image_filename);
-        return;
+        fs.readFile('./storage/default/' + userImage, (err, data) => {
+            if (err) throw err;
+            res.writeHead(200, {'Content-Type': contentType});
+            res.end(data);
+        })
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -70,8 +73,21 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
 
 
 const deleteImage = async (req: Request, res: Response): Promise<void> => {
+    if (req.header("X-Authorization") === undefined) {
+        res.status(401).send();
+        return;
+    }
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id as any)) {
+        res.status(400).send("Bad request")
+        return;
+    }
+    const user = await users.getUserByToken(req.header("X-Authorization"));
+    if (user[0].id !== id) {
+        res.status(401).send("No authorization");
+        return;
+    }
     try{
-        // Your code goes here
         res.statusMessage = "Not Implemented Yet!";
         res.status(501).send();
         return;
