@@ -23,4 +23,8 @@ type User = {
      * User authorization token generated on log in
      */
     auth_token: string
+    /**
+     * User image file name
+     */
+    image_filename:string
 }
