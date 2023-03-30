@@ -1,6 +1,7 @@
 import {Request, Response} from "express";
 import Logger from "../../config/logger";
 import * as usersImages from '../models/user.image.server.model';
+import * as users from '../models/user.server.model';
 import * as schemas from '../resources/schemas.json';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
@@ -12,18 +13,22 @@ import * as mime from "mime-types";
 const getImage = async (req: Request, res: Response): Promise<void> => {
     try{
         const id = parseInt(req.params.id, 10);
-        const users = await usersImages.getImageById(id);
-        const userImage = users[0].image_filename;
-        if (userImage === null) {
+        if (isNaN(id as any)) {
+            res.status(400).send("Bad request")
+            return;
+        }
+        const user = await usersImages.getImageById(id);
+        const userImage = user[0].image_filename;
+        if (userImage === null||userImage === undefined) {
             res.status(404).send("No image found")
             return;
         }
-        const contentType = mime.contentType(users[0].image_filename)
+        const contentType = mime.contentType(user[0].image_filename)
         if (!contentType){
             res.status(404).send("No image found")
             return;
         }
-        res.writeHead(200,{'Content-Type': contentType}).send(users[0].image_filename);
+        res.writeHead(200,{'Content-Type': contentType}).send(user[0].image_filename);
         return;
     } catch (err) {
         Logger.error(err);
@@ -39,10 +44,21 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
         res.status(401).send();
         return;
     }
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id as any)) {
+        res.status(400).send("Bad request")
+        return;
+    }
+    const user = await users.getUserByToken(req.header("X-Authorization"));
+    if (user[0].id !== id) {
+        res.status(401).send("No authorization");
+        return;
+    }
     try{
-        // Your code goes here
+        const userImage = req.body;
+        usersImages.setImageById(id ,userImage);
         res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        res.status(201).send();
         return;
     } catch (err) {
         Logger.error(err);
