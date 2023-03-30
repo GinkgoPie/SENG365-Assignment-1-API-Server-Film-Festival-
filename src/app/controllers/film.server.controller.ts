@@ -3,11 +3,7 @@ import * as films from "../models/film.server.model";
 import * as schemas from '../resources/schemas.json';
 import Logger from "../../config/logger";
 import {validate} from '../validate';
-import {ParamsDictionary} from "express-serve-static-core";
 import * as users from "../models/user.server.model";
-import {ResultSetHeader} from "mysql2";
-import {getPool} from "../../config/db";
-import {deleteWithSql} from "../models/film.server.model";
 
 
 const isNumeric = async (value:any)=> {
@@ -85,7 +81,6 @@ const viewAll = async (req: Request, res: Response): Promise<void> => {
     const validation = await validate(
         schemas.film_search,
         req.query)
-    Logger.info(validation);
     if (validation !== true) {
         res.statusMessage = `Bad Request: ${validation.toString()} `;
         res.status(400).send();
