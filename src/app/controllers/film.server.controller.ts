@@ -4,6 +4,10 @@ import * as schemas from '../resources/schemas.json';
 import Logger from "../../config/logger";
 import {validate} from '../validate';
 import {ParamsDictionary} from "express-serve-static-core";
+import * as users from "../models/user.server.model";
+import {ResultSetHeader} from "mysql2";
+import {getPool} from "../../config/db";
+import {deleteWithSql} from "../models/film.server.model";
 
 
 const isNumeric = async (value:any)=> {
@@ -59,7 +63,21 @@ const buildQuery = async (req: Request) => {
     return sql;
 }
 
-
+const verifyReleaseDate = async (req: Request, res: Response)=> {
+    const datetime = new Date();
+    const date = ("0" + datetime.getDate()).slice(-2);
+    const month = ("0" + (datetime.getMonth() + 1)).slice(-2);
+    const year = datetime.getFullYear();
+    const hours = datetime.getHours();
+    const minutes = datetime.getMinutes();
+    const seconds = datetime.getSeconds();
+    const currentTime = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
+    if (req.body.releaseDate !== undefined && req.body.releaseDate < currentTime ){
+        res.statusMessage = `releaseDate in past `;
+        res.status(403).send();
+    }
+    return;
+}
 
 
 
@@ -165,18 +183,8 @@ const getOne = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
-const addOne = async (req: Request, res: Response): Promise<void> => {        const datetime = new Date();
-    const date = ("0" + datetime.getDate()).slice(-2);
-    const month = ("0" + (datetime.getMonth() + 1)).slice(-2);
-    const year = datetime.getFullYear();
-    const hours = datetime.getHours();
-    const minutes = datetime.getMinutes();
-    const seconds = datetime.getSeconds();
-    const currentTime = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
-    if (req.body.releaseDate < currentTime ){
-        res.statusMessage = `releaseDate in past `;
-        res.status(403).send();
-    }
+const addOne = async (req: Request, res: Response): Promise<void> => {
+    await verifyReleaseDate(req, res);
     const validation = await validate(
         schemas.film_post,
         req.body)
@@ -185,10 +193,20 @@ const addOne = async (req: Request, res: Response): Promise<void> => {        co
         res.status(400).send();
         return;
     }
+    if (req.header("X-Authorization") === undefined) {
+        res.status(401).send();
+        return;
+    }
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(200).send();
+        const title = req.body.title;
+        const description = req.body.description;
+        const genreId = parseInt(req.body.genreId, 10);
+        const releaseDate = req.body.releaseDate || null;
+        const runtime = parseInt(req.body.runtime, 10)|| null;
+        const ageRating = req.body.ageRating || null;
+        const director = await users.getUserByToken(req.header("X-Authorization"));
+        const result = await films.insert(title, description, genreId, releaseDate, runtime, director[0].id, ageRating);
+        res.status(201).send({ "filmId": result.insertId });
         return;
     } catch (err) {
         Logger.error(err);
@@ -199,10 +217,48 @@ const addOne = async (req: Request, res: Response): Promise<void> => {        co
 }
 
 const editOne = async (req: Request, res: Response): Promise<void> => {
+    if (req.header("X-Authorization") === undefined) {
+        res.status(401).send("Unauthorized for this operation");
+        return;
+    }
+    const validation = await validate(
+        schemas.film_patch,
+        req.body)
+    if (validation !== true) {
+        res.statusMessage = `Bad Request: ${validation.toString()} `;
+        res.status(400).send();
+        return;
+    }
+    const filmID = req.params.id;
+    if (isNaN(filmID as any)) {
+        res.status(404).send("Invalid film id for this operation");
+        return;
+    }
+    await verifyReleaseDate(req, res);
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        let sql = 'update film set '
+        if(req.body.title !== undefined) {
+            sql = sql + 'title="' + req.body.title +'", ';
+        }
+        if(req.body.description !== undefined) {
+            sql = sql + 'description="' + req.body.description +'", ';
+        }
+        if(req.body.genreId !== undefined) {
+            sql = sql + 'genre_id=' + Number(req.body.genreId) +', ';
+        }
+        if(req.body.runtime !== undefined) {
+            sql = sql + 'runtime=' + Number(req.body.runtime) +', ';
+        }
+        if(req.body.ageRating !== undefined) {
+            sql = sql + 'age_rating="' + req.body.ageRating +'", ';
+        }
+        if(req.body.releaseDate !== undefined) {
+            sql = sql + 'release_date="' + req.body.releaseDate +'", ';
+        }
+        sql = sql.slice(0, -2);
+        sql = sql + ' where id=' + req.params.id;
+        const result = films.updateWithSql(sql);
+        res.status(200).send(result);
         return;
     } catch (err) {
         Logger.error(err);
@@ -213,11 +269,23 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
 }
 
 const deleteOne = async (req: Request, res: Response): Promise<void> => {
-    try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+    if (req.header("X-Authorization") === undefined) {
+        res.status(401).send("Unauthorized for this operation");
         return;
+    }
+    try{
+        const filmId = req.params.id;
+        const token =  req.header("X-Authorization");
+        const director = await users.getUserByToken(token);
+        if (director[0].id === undefined) {
+            res.status(403).send("Unauthorized for this operation");
+            return;
+        } else {
+            const sql = 'delete from film where director_id = ' + director[0].id + ' and id =' + filmId;
+            await films.deleteWithSql(sql);
+            res.status(200).send();
+            return;
+        }
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -238,5 +306,7 @@ const getGenres = async (req: Request, res: Response): Promise<void> => {
         return;
     }
 }
+
+
 
 export {viewAll, getOne, addOne, editOne, deleteOne, getGenres};

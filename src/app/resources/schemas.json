@@ -190,7 +190,7 @@
       },
       "releaseDate": {
         "type": "string",
-        "format": "datetime"
+        "format": "date-time"
       },
       "genreId": {
         "type": "number",
@@ -238,7 +238,7 @@
       },
       "releaseDate": {
         "type": "string",
-        "format": "datetime"
+        "format": "date-time"
       },
       "genreId": {
         "type": "number",

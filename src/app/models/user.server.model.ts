@@ -84,4 +84,12 @@ const executeSql = async (query:string): Promise<any> => {
     return rows;
 }
 
-export { getAll, getUserById, getUserByEmail, insert, updatePassword, remove, logout, updateToken,executeSql }
+const getUserByToken = async (token:string): Promise<User[]> => {
+    Logger.info( `Searching for user with token in database` );
+    const conn = await getPool().getConnection();
+    const query = 'select * from user where auth_token = ?'
+    const [ rows ] = await conn.query(query, [token]);
+    return rows;
+}
+
+export { getAll, getUserById, getUserByEmail, insert, updatePassword, remove, logout, updateToken,executeSql, getUserByToken}

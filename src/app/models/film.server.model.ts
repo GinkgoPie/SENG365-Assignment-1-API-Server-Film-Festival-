@@ -12,10 +12,15 @@ const searchWithSql = async (sql: string) : Promise<Film[]> => {
     return rows;
 };
 
+const updateWithSql = async (sql: string) : Promise<Film[]> => {
+    Logger.info( `Running sql to update films from the database` );
+    const conn = await getPool().getConnection();
+    conn.escape();
+    const [ rows ] = await conn.query(sql);
+    await conn.release();
+    return rows;
+};
 
-export function getFilmsWithTitle(q: string) {
-   return;
-}
 
 
 const getFilmById = async (id: number) : Promise<Film[]> => {
@@ -45,6 +50,24 @@ const listAllGenres = async (): Promise<any[]>=> {
     const [ rows ] = await conn.query(query);
     await conn.release();
     return rows;
-}
+};
 
-export { getFilmById, getAllFilms, searchWithSql, listAllGenres}
+const insert = async (title: string, description:string, genreId:number, releaseDate:string, runtime:number, director:number, ageRating:string ) : Promise<ResultSetHeader> => {
+    Logger.info( `Adding film ${title} to the database` );
+    const conn = await getPool().getConnection();
+    const query = 'insert into film (title, description, genre_id, release_date, runtime, director_id, age_rating) values ( ?, ?, ?, ?, ?, ?,?)';
+    const [ result ] = await conn.query( query, [title, description, genreId, releaseDate, runtime, director, ageRating] );
+    await conn.release();
+    return result;
+};
+
+const deleteWithSql = async (sql: string) : Promise<void> => {
+    Logger.info( `Running sql to delete film from the database` );
+    const conn = await getPool().getConnection();
+    conn.escape();
+    await conn.query(sql);
+    await conn.release();
+    return;
+};
+
+export { getFilmById, getAllFilms, searchWithSql, listAllGenres, insert, updateWithSql,deleteWithSql}
