@@ -13,6 +13,7 @@
   "author": "Morgan English",
   "license": "ISC",
   "dependencies": {
+    "@types/express-serve-static-core": "^4.17.33",
     "ajv": "^8.11.0",
     "ajv-formats": "^2.1.1",
     "all": "^0.0.0",

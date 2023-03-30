@@ -99,22 +99,22 @@
       "directorId": {
         "type": "string",
         "minLength": 1,
-        "format": "integer"
+        "format": "int32"
       },
       "reviewerId": {
         "type": "string",
         "minLength": 1,
-        "format": "integer"
+        "format": "int32"
       },
       "startIndex": {
         "type": "string",
         "minLength": 1,
-        "format": "integer"
+        "format": "int32"
       },
       "count": {
         "type": "string",
         "minLength": 1,
-        "format": "integer"
+        "format": "int32"
       },
       "sortBy": {
         "type": "string",
@@ -131,13 +131,13 @@
         "anyOf": [
           {
             "type": "string",
-            "format": "integer"
+            "format": "int32"
           },
           {
             "type": "array",
             "items": {
               "type": "string",
-              "format": "integer"
+              "format": "int32"
             }
           }
         ]
@@ -194,12 +194,12 @@
       },
       "genreId": {
         "type": "number",
-        "format": "integer",
+        "format": "int32",
         "minimum": 0
       },
       "runtime": {
         "type": "number",
-        "format": "integer",
+        "format": "int32",
         "minimum": 1,
         "maximum": 300
       },
@@ -242,12 +242,12 @@
       },
       "genreId": {
         "type": "number",
-        "format": "integer",
+        "format": "int32",
         "minimum": 0
       },
       "runtime": {
         "type": "number",
-        "format": "integer",
+        "format": "int32",
         "minimum": 1,
         "maximum": 300
       },
