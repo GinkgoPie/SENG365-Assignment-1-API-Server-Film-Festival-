@@ -47,5 +47,9 @@ type Film = {
      * Rating of the film
      */
     rating: number
+    /**
+     * User image file name
+     */
+    image_filename:string
 
 }

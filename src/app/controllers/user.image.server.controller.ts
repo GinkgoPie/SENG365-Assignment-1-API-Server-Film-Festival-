@@ -19,6 +19,10 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
         }
         const user = await usersImages.getImageById(id);
         const userImage = user[0].image_filename;
+        if(user[0].id === undefined) {
+            res.status(403).send("No user found for this id")
+            return;
+        }
         if (userImage === null||userImage === undefined) {
             res.status(404).send("No image found")
             return;
@@ -43,6 +47,11 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
+    const getUser = await users.getUserById(parseInt(req.params.id,10));
+    if(getUser[0] === undefined) {
+        res.status(403).send("No user found for this id")
+        return;
+    }
     if (req.header("X-Authorization") === undefined) {
         res.status(401).send();
         return;
@@ -59,13 +68,12 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
     }
     try{
         const userImage = req.body;
-        fs.readFile('./storage/images/' + userImage, (err, data) => {
+        const filePath = './storage/images/user_'+ id +'.jpg';
+        await fs.writeFile(filePath , userImage, err => {
             if (err) throw err;
-            usersImages.setImageById(id ,userImage);
-        })
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(201).send();
-        return;
+            usersImages.setImageById(id, 'user_'+id + '.jpg');
+            res.status(201).send();
+            return;})
     } catch (err) {
         Logger.error(err);
         res.statusMessage = "Internal Server Error";
@@ -91,8 +99,8 @@ const deleteImage = async (req: Request, res: Response): Promise<void> => {
         return;
     }
     try{
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        await usersImages.deleteImageById(id);
+        res.status(200).send();
         return;
     } catch (err) {
         Logger.error(err);
