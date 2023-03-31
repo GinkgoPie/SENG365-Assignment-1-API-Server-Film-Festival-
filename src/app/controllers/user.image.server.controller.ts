@@ -28,7 +28,7 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
             res.status(404).send("No image found")
             return;
         }
-        fs.readFile('./storage/default/' + userImage, (err, data) => {
+        fs.readFile('./storage/images/' + userImage, (err, data) => {
             if (err) throw err;
             res.writeHead(200, {'Content-Type': contentType});
             res.end(data);
@@ -59,7 +59,10 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
     }
     try{
         const userImage = req.body;
-        usersImages.setImageById(id ,userImage);
+        fs.readFile('./storage/images/' + userImage, (err, data) => {
+            if (err) throw err;
+            usersImages.setImageById(id ,userImage);
+        })
         res.statusMessage = "Not Implemented Yet!";
         res.status(201).send();
         return;
