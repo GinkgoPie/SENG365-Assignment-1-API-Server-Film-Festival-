@@ -47,26 +47,26 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
-    const getUser = await users.getUserById(parseInt(req.params.id,10));
-    if(getUser[0] === undefined) {
-        res.status(403).send("No user found for this id")
-        return;
-    }
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send();
-        return;
-    }
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id as any)) {
-        res.status(400).send("Bad request")
-        return;
-    }
-    const user = await users.getUserByToken(req.header("X-Authorization"));
-    if (user[0].id !== id) {
-        res.status(401).send("No authorization");
-        return;
-    }
     try{
+        const getUser = await users.getUserById(parseInt(req.params.id,10));
+        if(getUser[0] === undefined) {
+            res.status(403).send("No user found for this id")
+            return;
+        }
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send();
+            return;
+        }
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id as any)) {
+            res.status(400).send("Bad request")
+            return;
+        }
+        const user = await users.getUserByToken(req.header("X-Authorization"));
+        if (user[0].id !== id) {
+            res.status(401).send("No authorization");
+            return;
+        }
         const userImage = req.body;
         const filePath = './storage/images/user_'+ id +'.jpg';
         await fs.writeFile(filePath , userImage, err => {
@@ -84,21 +84,21 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
 
 
 const deleteImage = async (req: Request, res: Response): Promise<void> => {
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send();
-        return;
-    }
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id as any)) {
-        res.status(400).send("Bad request")
-        return;
-    }
-    const user = await users.getUserByToken(req.header("X-Authorization"));
-    if (user[0].id !== id) {
-        res.status(401).send("No authorization");
-        return;
-    }
     try{
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send();
+            return;
+        }
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id as any)) {
+            res.status(400).send("Bad request")
+            return;
+        }
+        const user = await users.getUserByToken(req.header("X-Authorization"));
+        if (user[0].id !== id) {
+            res.status(401).send("No authorization");
+            return;
+        }
         await usersImages.deleteImageById(id);
         res.status(200).send();
         return;

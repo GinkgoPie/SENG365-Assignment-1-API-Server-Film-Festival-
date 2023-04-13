@@ -27,24 +27,24 @@ const getReviews = async (req: Request, res: Response): Promise<void> => {
 
 
 const addReview = async (req: Request, res: Response): Promise<void> => {
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send("Unauthorized for this operation");
-        return;
-    }
-    const film = await films.getFilmById(parseInt(req.params.id,10));
-    if (film[0].filmId === undefined){
-        res.status(404).send("Film not found");
-        return;
-    }
-    const validation = await validate(
-        schemas.film_review_post,
-        req.body)
-    if (validation !== true) {
-        res.statusMessage = `Bad Request: ${validation.toString()} `;
-        res.status(400).send();
-        return;
-    }
     try{
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send("Unauthorized for this operation");
+            return;
+        }
+        const film = await films.getFilmById(parseInt(req.params.id,10));
+        if (film[0].filmId === undefined){
+            res.status(404).send("Film not found");
+            return;
+        }
+        const validation = await validate(
+            schemas.film_review_post,
+            req.body)
+        if (validation !== true) {
+            res.statusMessage = `Bad Request: ${validation.toString()} `;
+            res.status(400).send();
+            return;
+        }
         const rating = parseInt(req.body.rating,10);
         const user = await users.getUserByToken(req.header("X-Authorization"));
         const userId = user[0].id;

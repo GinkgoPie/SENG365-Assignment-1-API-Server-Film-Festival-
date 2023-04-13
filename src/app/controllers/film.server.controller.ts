@@ -78,46 +78,46 @@ const verifyReleaseDate = async (req: Request, res: Response)=> {
 
 
 const viewAll = async (req: Request, res: Response): Promise<void> => {
-    const validation = await validate(
-        schemas.film_search,
-        req.query)
-    if (validation !== true) {
-        res.statusMessage = `Bad Request: ${validation.toString()} `;
-        res.status(400).send();
-        return;
-    } else{
-        if (req.query.startIndex !== undefined && isNaN(req.query.startIndex as any)){
+    try{
+        const validation = await validate(
+            schemas.film_search,
+            req.query)
+        if (validation !== true) {
+            res.statusMessage = `Bad Request: ${validation.toString()} `;
             res.status(400).send();
             return;
-        }else if (req.query.count !== undefined && isNaN(req.query.count as any)){
-            res.status(400).send();
-            return;
-        }else if (req.query.directorId !== undefined && isNaN(req.query.directorId as any)){
-            res.status(400).send();
-            return;
-        }else if (req.query.reviewerId !== undefined && isNaN(req.query.reviewerId as any)){
-            res.status(400).send();
-            return;
-        }else if (req.query.genreIds !== undefined) {
-            if (Number(req.query.genreIds) > 12 || Number(req.query.genreIds) < 1) {
+        } else{
+            if (req.query.startIndex !== undefined && isNaN(req.query.startIndex as any)){
                 res.status(400).send();
-                return;}
-            for (const genreId of req.query.genreIds as string[]) {
-                if (isNaN(genreId as any)) {
+                return;
+            }else if (req.query.count !== undefined && isNaN(req.query.count as any)){
+                res.status(400).send();
+                return;
+            }else if (req.query.directorId !== undefined && isNaN(req.query.directorId as any)){
+                res.status(400).send();
+                return;
+            }else if (req.query.reviewerId !== undefined && isNaN(req.query.reviewerId as any)){
+                res.status(400).send();
+                return;
+            }else if (req.query.genreIds !== undefined) {
+                if (Number(req.query.genreIds) > 12 || Number(req.query.genreIds) < 1) {
                     res.status(400).send();
-                    return;
-                } else if (Number(genreId) > 12 || Number(genreId) < 1) {
-                    res.status(400).send();
-                    return;
+                    return;}
+                for (const genreId of req.query.genreIds as string[]) {
+                    if (isNaN(genreId as any)) {
+                        res.status(400).send();
+                        return;
+                    } else if (Number(genreId) > 12 || Number(genreId) < 1) {
+                        res.status(400).send();
+                        return;
+                    }
                 }
             }
         }
-    }
-    let startIndex = 0;
-    if(req.query.startIndex){
-        startIndex = parseInt(req.query.startIndex as string, 10)
-    }
-    try{
+        let startIndex = 0;
+        if(req.query.startIndex){
+            startIndex = parseInt(req.query.startIndex as string, 10)
+        }
         if (req.query.q || req.query.directorId ||req.query.reviewerId ||req.query.startIndex ||req.query.count ||req.query.sortBy ||req.query.genreIds ||req.query.ageRatings ){
             Logger.info("GET film with parameters")
             const query = buildQuery(req);
@@ -179,20 +179,20 @@ const getOne = async (req: Request, res: Response): Promise<void> => {
 }
 
 const addOne = async (req: Request, res: Response): Promise<void> => {
-    await verifyReleaseDate(req, res);
-    const validation = await validate(
-        schemas.film_post,
-        req.body)
-    if (validation !== true) {
-        res.statusMessage = `Bad Request: ${validation.toString()} `;
-        res.status(400).send();
-        return;
-    }
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send();
-        return;
-    }
     try{
+        await verifyReleaseDate(req, res);
+        const validation = await validate(
+            schemas.film_post,
+            req.body)
+        if (validation !== true) {
+            res.statusMessage = `Bad Request: ${validation.toString()} `;
+            res.status(400).send();
+            return;
+        }
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send();
+            return;
+        }
         const title = req.body.title;
         const description = req.body.description;
         const genreId = parseInt(req.body.genreId, 10);
@@ -212,25 +212,25 @@ const addOne = async (req: Request, res: Response): Promise<void> => {
 }
 
 const editOne = async (req: Request, res: Response): Promise<void> => {
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send("Unauthorized for this operation");
-        return;
-    }
-    const validation = await validate(
-        schemas.film_patch,
-        req.body)
-    if (validation !== true) {
-        res.statusMessage = `Bad Request: ${validation.toString()} `;
-        res.status(400).send();
-        return;
-    }
-    const filmID = req.params.id;
-    if (isNaN(filmID as any)) {
-        res.status(404).send("Invalid film id for this operation");
-        return;
-    }
-    await verifyReleaseDate(req, res);
     try{
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send("Unauthorized for this operation");
+            return;
+        }
+        const validation = await validate(
+            schemas.film_patch,
+            req.body)
+        if (validation !== true) {
+            res.statusMessage = `Bad Request: ${validation.toString()} `;
+            res.status(400).send();
+            return;
+        }
+        const filmID = req.params.id;
+        if (isNaN(filmID as any)) {
+            res.status(404).send("Invalid film id for this operation");
+            return;
+        }
+        await verifyReleaseDate(req, res);
         let sql = 'update film set '
         if(req.body.title !== undefined) {
             sql = sql + 'title="' + req.body.title +'", ';
@@ -252,7 +252,7 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
         }
         sql = sql.slice(0, -2);
         sql = sql + ' where id=' + req.params.id;
-        const result = films.updateWithSql(sql);
+        const result = await films.updateWithSql(sql);
         res.status(200).send(result);
         return;
     } catch (err) {
@@ -264,11 +264,11 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
 }
 
 const deleteOne = async (req: Request, res: Response): Promise<void> => {
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send("Unauthorized for this operation");
-        return;
-    }
     try{
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send("Unauthorized for this operation");
+            return;
+        }
         const filmId = req.params.id;
         const token =  req.header("X-Authorization");
         const director = await users.getUserByToken(token);

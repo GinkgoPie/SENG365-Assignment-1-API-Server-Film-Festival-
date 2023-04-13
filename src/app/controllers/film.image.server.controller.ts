@@ -44,26 +44,26 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 }
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
-    const getFilm = await films.getFilmById(parseInt(req.params.id,10));
-    if(getFilm[0] === undefined) {
-        res.status(403).send("No film found for this id")
-        return;
-    }
-    if (req.header("X-Authorization") === undefined) {
-        res.status(401).send();
-        return;
-    }
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id as any)) {
-        res.status(400).send("Bad request")
-        return;
-    }
-    const director = await users.getUserByToken(req.header("X-Authorization"));
-    if (director[0].id !== getFilm[0].directorId) {
-        res.status(401).send("No authorization");
-        return;
-    }
     try{
+        const getFilm = await films.getFilmById(parseInt(req.params.id,10));
+        if(getFilm[0] === undefined) {
+            res.status(403).send("No film found for this id")
+            return;
+        }
+        if (req.header("X-Authorization") === undefined) {
+            res.status(401).send();
+            return;
+        }
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id as any)) {
+            res.status(400).send("Bad request")
+            return;
+        }
+        const director = await users.getUserByToken(req.header("X-Authorization"));
+        if (director[0].id !== getFilm[0].directorId) {
+            res.status(401).send("No authorization");
+            return;
+        }
         const filmImage = req.body;
         const filePath = './storage/images/film_'+ id +'.jpg';
         await fs.writeFile(filePath , filmImage, err => {
